@@ -12,23 +12,27 @@ const (
 	CellW = 20
 )
 
-func render() error {
+// Screen is a struct responsible for displaying the game
+type Screen struct {
+}
+
+func (s *Screen) render() error {
 	defer sdl.Quit()
 
-	w, err := window()
+	w, err := s.window()
 	if err != nil {
 		return err
 	}
 	defer w.Destroy()
 
-	for i := 0; i < 10; i++ {
-		for j := 0; j < 10; j++ {
-			err = cell(w, i*(CellW+2), j*(CellH+2))
-			if err != nil {
-				return err
-			}
-		}
+	r, err := s.renderer(w)
+	if err != nil {
+		return err
 	}
+	defer r.Destroy()
+
+	// Render everything in here
+	s.drawScene(r)
 
 	// Running event loop
 	running := true
@@ -65,7 +69,7 @@ func init() {
 	}
 }
 
-func window() (*sdl.Window, error) {
+func (s *Screen) window() (*sdl.Window, error) {
 	return sdl.CreateWindow(
 		"test",
 		sdl.WINDOWPOS_UNDEFINED,
@@ -75,20 +79,32 @@ func window() (*sdl.Window, error) {
 		sdl.WINDOW_SHOWN)
 }
 
-func renderer(window *sdl.Window) (*sdl.Renderer, error) {
+func (s *Screen) renderer(window *sdl.Window) (*sdl.Renderer, error) {
 	return sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
 }
 
-func cell(window *sdl.Window, x, y int) error {
-	surface, err := window.GetSurface()
-	if err != nil {
-		return err
+func (s *Screen) cell(rect sdl.Rect, r *sdl.Renderer, isOpen bool) {
+	r.SetDrawColor(255, 0, 0, 255)
+	r.DrawRect(&rect)
+	if isOpen == false {
+		r.FillRect(&rect)
 	}
-	// surface.FillRect(nil, 0)
+}
 
-	rect := sdl.Rect{X: int32(x), Y: int32(y), W: CellW, H: CellH}
-	surface.FillRect(&rect, 0xffff0000)
-	window.UpdateSurface()
+func (s *Screen) drawScene(r *sdl.Renderer) {
+	r.Clear()
 
-	return nil
+	for i := 0; i < 10; i++ {
+		for j := 0; j < 10; j++ {
+			rect := sdl.Rect{
+				X: int32(i * (CellW + 2)),
+				Y: int32(j * (CellH + 2)),
+				W: CellW,
+				H: CellH,
+			}
+			s.cell(rect, r, false)
+		}
+	}
+
+	r.Present()
 }
