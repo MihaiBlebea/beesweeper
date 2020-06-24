@@ -10,30 +10,30 @@ type Board interface {
 }
 
 type board struct {
-	cells  cells
-	height int
-	width  int
+	cells      cells
+	cellCountH int
+	cellCountW int
 }
 
 type cells map[int]map[int]cell
 
-func newBoard(height, width int) *board {
+func newBoard(cellCountH, cellCountW int) *board {
 	b := &board{
-		height: height,
-		width:  width,
+		cellCountH: cellCountH,
+		cellCountW: cellCountW,
 	}
-	b.cells = b.generateCells(height, width)
+	b.cells = b.generateCells(cellCountH, cellCountW)
 	b.cells = b.generateBees(b.cells, 10)
 
 	return b
 }
 
-func (b *board) generateCells(height, width int) cells {
+func (b *board) generateCells(cellCountH, cellCountW int) cells {
 	cells := make(map[int]map[int]cell)
-	for x := 0; x < width; x++ {
+	for x := 0; x < cellCountW; x++ {
 		cells[x] = make(map[int]cell)
 
-		for y := 0; y < height; y++ {
+		for y := 0; y < cellCountH; y++ {
 			cell := newCell(false, x, y)
 			cells[x][y] = *cell
 		}
@@ -45,8 +45,8 @@ func (b *board) generateCells(height, width int) cells {
 func (b *board) generateBees(cells cells, count int) cells {
 
 	for count > 0 {
-		x := random(0, b.width)
-		y := random(0, b.height)
+		x := random(0, b.cellCountW)
+		y := random(0, b.cellCountH)
 
 		for i := 0; i < x; i++ {
 			for j := 0; j < y; j++ {

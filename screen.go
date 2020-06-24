@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/MihaiBlebea/beesweeper/game"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -14,6 +15,28 @@ const (
 
 // Screen is a struct responsible for displaying the game
 type Screen struct {
+	cellH      int
+	cellW      int
+	cellCountH int
+	cellCountW int
+	spacer     int
+	game       *game.Game
+}
+
+// NewScreen constructor for screen struct
+func NewScreen(cellH, cellW, cellCountH, cellCountW, spacer int, gm *game.Game) *Screen {
+	// b := gm.GetBoard()
+	return &Screen{cellH, cellW, cellCountH, cellCountW, spacer, gm}
+}
+
+func (s *Screen) getSceenTotalWidth() int32 {
+	screenW := s.cellW*s.cellCountW + s.spacer*(s.cellCountW-1)
+	return int32(screenW)
+}
+
+func (s *Screen) getSceenTotalHeight() int32 {
+	screenH := s.cellH*s.cellCountH + s.spacer*(s.cellCountH-1)
+	return int32(screenH)
 }
 
 func (s *Screen) render() error {
@@ -74,8 +97,8 @@ func (s *Screen) window() (*sdl.Window, error) {
 		"test",
 		sdl.WINDOWPOS_UNDEFINED,
 		sdl.WINDOWPOS_UNDEFINED,
-		800,
-		600,
+		s.getSceenTotalWidth(),
+		s.getSceenTotalHeight(),
 		sdl.WINDOW_SHOWN)
 }
 
@@ -94,13 +117,13 @@ func (s *Screen) cell(rect sdl.Rect, r *sdl.Renderer, isOpen bool) {
 func (s *Screen) drawScene(r *sdl.Renderer) {
 	r.Clear()
 
-	for i := 0; i < 10; i++ {
-		for j := 0; j < 10; j++ {
+	for i := 0; i < s.cellCountW; i++ {
+		for j := 0; j < s.cellCountH; j++ {
 			rect := sdl.Rect{
-				X: int32(i * (CellW + 2)),
-				Y: int32(j * (CellH + 2)),
-				W: CellW,
-				H: CellH,
+				X: int32(i * (CellW + s.spacer)),
+				Y: int32(j * (CellH + s.spacer)),
+				W: int32(s.cellW),
+				H: int32(s.cellH),
 			}
 			s.cell(rect, r, false)
 		}
