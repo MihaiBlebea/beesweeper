@@ -11,6 +11,7 @@ type Board interface {
 	GetCellCountW() int
 	GetCell(x, y int) Cell
 	SetSelected(x, y int) Cell
+	UnselectAll()
 }
 
 type board struct {
@@ -53,6 +54,23 @@ func (b *board) SetSelected(x, y int) Cell {
 	b.cells[x][y] = cell
 
 	return &cell
+}
+
+func (b *board) unselect(x, y int) Cell {
+	cell := b.cells[x][y]
+	cell.selected = false
+
+	b.cells[x][y] = cell
+
+	return &cell
+}
+
+func (b *board) UnselectAll() {
+	for x := 0; x < b.cellCountW; x++ {
+		for y := 0; y < b.cellCountH; y++ {
+			b.unselect(x, y)
+		}
+	}
 }
 
 func (b *board) generateCells(cellCountH, cellCountW int) cells {

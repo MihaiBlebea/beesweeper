@@ -27,7 +27,7 @@ type Screen struct {
 func NewScreen(cellH, cellW, spacer int, gm *game.Game) *Screen {
 	// b := gm.GetBoard()
 	gm.GetBoard().SetSelected(0, 0)
-	fmt.Println(gm.GetBoard().GetCell(0, 0))
+
 	return &Screen{cellH, cellW, spacer, gm}
 }
 
@@ -59,7 +59,10 @@ func (s *Screen) render() error {
 	defer r.Destroy()
 
 	// Render everything in here
-	s.drawScene(r)
+	err = s.drawScene(r)
+	if err != nil {
+		return err
+	}
 
 	// Running event loop
 	selectedX := 0
@@ -97,8 +100,12 @@ func (s *Screen) render() error {
 					}
 				}
 
+				s.game.GetBoard().UnselectAll()
 				s.game.GetBoard().SetSelected(selectedX, selectedY)
-				s.drawScene(r)
+				err = s.drawScene(r)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -147,8 +154,11 @@ func (s *Screen) getCellColor(isSelected bool) (r, g, b, a uint8) {
 	return 255, 0, 0, 255
 }
 
-func (s *Screen) drawScene(r *sdl.Renderer) {
-	r.Clear()
+func (s *Screen) drawScene(r *sdl.Renderer) error {
+	err := r.Clear()
+	if err != nil {
+		return err
+	}
 
 	board := s.game.GetBoard()
 	cellCountW := board.GetCellCountW()
@@ -169,4 +179,6 @@ func (s *Screen) drawScene(r *sdl.Renderer) {
 	}
 
 	r.Present()
+
+	return nil
 }
