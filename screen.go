@@ -15,27 +15,31 @@ const (
 
 // Screen is a struct responsible for displaying the game
 type Screen struct {
-	cellH      int
-	cellW      int
-	cellCountH int
-	cellCountW int
-	spacer     int
-	game       *game.Game
+	cellH int
+	cellW int
+	// cellCountH int
+	// cellCountW int
+	spacer int
+	game   *game.Game
 }
 
 // NewScreen constructor for screen struct
-func NewScreen(cellH, cellW, cellCountH, cellCountW, spacer int, gm *game.Game) *Screen {
+func NewScreen(cellH, cellW, spacer int, gm *game.Game) *Screen {
 	// b := gm.GetBoard()
-	return &Screen{cellH, cellW, cellCountH, cellCountW, spacer, gm}
+	gm.GetBoard().SetSelected(0, 0)
+	fmt.Println(gm.GetBoard().GetCell(0, 0))
+	return &Screen{cellH, cellW, spacer, gm}
 }
 
 func (s *Screen) getSceenTotalWidth() int32 {
-	screenW := s.cellW*s.cellCountW + s.spacer*(s.cellCountW-1)
+	cellCountW := s.game.GetBoard().GetCellCountW()
+	screenW := s.cellW*cellCountW + s.spacer*(cellCountW-1)
 	return int32(screenW)
 }
 
 func (s *Screen) getSceenTotalHeight() int32 {
-	screenH := s.cellH*s.cellCountH + s.spacer*(s.cellCountH-1)
+	cellCountH := s.game.GetBoard().GetCellCountH()
+	screenH := s.cellH*cellCountH + s.spacer*(cellCountH-1)
 	return int32(screenH)
 }
 
@@ -58,6 +62,9 @@ func (s *Screen) render() error {
 	s.drawScene(r)
 
 	// Running event loop
+	selectedX := 0
+	selectedY := 0
+
 	running := true
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -70,13 +77,28 @@ func (s *Screen) render() error {
 				switch eventT.Keysym.Sym {
 				case sdl.K_UP:
 					fmt.Println("Pressed key up")
+					if selectedY > 0 {
+						selectedY--
+					}
 				case sdl.K_DOWN:
 					fmt.Println("Pressed key down")
+					if selectedY < s.game.GetBoard().GetCellCountH()-1 {
+						selectedY++
+					}
 				case sdl.K_LEFT:
 					fmt.Println("Pressed key left")
+					if selectedX > 0 {
+						selectedX--
+					}
 				case sdl.K_RIGHT:
 					fmt.Println("Pressed key right")
+					if selectedX < s.game.GetBoard().GetCellCountW()-1 {
+						selectedX++
+					}
 				}
+
+				s.game.GetBoard().SetSelected(selectedX, selectedY)
+				s.drawScene(r)
 			}
 		}
 
@@ -106,26 +128,43 @@ func (s *Screen) renderer(window *sdl.Window) (*sdl.Renderer, error) {
 	return sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
 }
 
-func (s *Screen) cell(rect sdl.Rect, r *sdl.Renderer, isOpen bool) {
-	r.SetDrawColor(255, 0, 0, 255)
+func (s *Screen) cell(rect sdl.Rect, r *sdl.Renderer, isOpen, isSelected bool) {
+	// Set color
+	r.SetDrawColor(s.getCellColor(isSelected))
 	r.DrawRect(&rect)
 	if isOpen == false {
 		r.FillRect(&rect)
 	}
 }
 
+func (s *Screen) getCellColor(isSelected bool) (r, g, b, a uint8) {
+	if isSelected {
+		// blue
+		return 0, 0, 255, 255
+	}
+
+	// red
+	return 255, 0, 0, 255
+}
+
 func (s *Screen) drawScene(r *sdl.Renderer) {
 	r.Clear()
 
-	for i := 0; i < s.cellCountW; i++ {
-		for j := 0; j < s.cellCountH; j++ {
+	board := s.game.GetBoard()
+	cellCountW := board.GetCellCountW()
+	cellCountH := board.GetCellCountH()
+
+	for i := 0; i < cellCountW; i++ {
+		for j := 0; j < cellCountH; j++ {
+			cell := board.GetCell(i, j)
+
 			rect := sdl.Rect{
 				X: int32(i * (CellW + s.spacer)),
 				Y: int32(j * (CellH + s.spacer)),
 				W: int32(s.cellW),
 				H: int32(s.cellH),
 			}
-			s.cell(rect, r, false)
+			s.cell(rect, r, cell.HasBee(), cell.IsSelected())
 		}
 	}
 

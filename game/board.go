@@ -7,6 +7,10 @@ import (
 
 // Board interface
 type Board interface {
+	GetCellCountH() int
+	GetCellCountW() int
+	GetCell(x, y int) Cell
+	SetSelected(x, y int) Cell
 }
 
 type board struct {
@@ -26,6 +30,29 @@ func newBoard(cellCountH, cellCountW int) *board {
 	b.cells = b.generateBees(b.cells, 10)
 
 	return b
+}
+
+func (b *board) GetCellCountH() int {
+	return b.cellCountH
+}
+
+func (b *board) GetCellCountW() int {
+	return b.cellCountW
+}
+
+func (b *board) GetCell(x, y int) Cell {
+	cell := b.cells[x][y]
+
+	return &cell
+}
+
+func (b *board) SetSelected(x, y int) Cell {
+	cell := b.cells[x][y]
+	cell.selected = true
+
+	b.cells[x][y] = cell
+
+	return &cell
 }
 
 func (b *board) generateCells(cellCountH, cellCountW int) cells {

@@ -7,9 +7,9 @@ import (
 )
 
 func main() {
-	gm := game.NewGame()
+	gm := game.NewGame(20, 20)
 
-	screen := &Screen{20, 20, 40, 40, 2, gm}
+	screen := NewScreen(20, 20, 2, gm)
 
 	err := screen.render()
 	if err != nil {

@@ -14,18 +14,18 @@ type Game struct {
 }
 
 // NewGame creates a new game struct
-func NewGame() *Game {
+func NewGame(cellCountH, cellCountW int) *Game {
 	return &Game{
 		id:      generateID(),
 		playing: true,
 		turn:    1,
-		board:   *newBoard(10, 10),
+		board:   *newBoard(cellCountH, cellCountW),
 	}
 }
 
 // GetBoard returns the game board
 func (g *Game) GetBoard() Board {
-	return g.board
+	return &g.board
 }
 
 func generateID() string {
