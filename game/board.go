@@ -12,6 +12,7 @@ type Board interface {
 	GetCell(x, y int) Cell
 	SetSelected(x, y int) Cell
 	UnselectAll()
+	UncoverCell(x, y int)
 }
 
 type board struct {
@@ -29,6 +30,8 @@ func newBoard(cellCountH, cellCountW int) *board {
 	}
 	b.cells = b.generateCells(cellCountH, cellCountW)
 	b.cells = b.generateBees(b.cells, 10)
+
+	b.countBees()
 
 	return b
 }
@@ -50,15 +53,6 @@ func (b *board) GetCell(x, y int) Cell {
 func (b *board) SetSelected(x, y int) Cell {
 	cell := b.cells[x][y]
 	cell.selected = true
-
-	b.cells[x][y] = cell
-
-	return &cell
-}
-
-func (b *board) unselect(x, y int) Cell {
-	cell := b.cells[x][y]
-	cell.selected = false
 
 	b.cells[x][y] = cell
 
@@ -111,6 +105,148 @@ func (b *board) generateBees(cells cells, count int) cells {
 	}
 
 	return b.cells
+}
+
+func (b *board) countBees() {
+	w := b.GetCellCountW()
+	h := b.GetCellCountH()
+
+	for x := 0; x < w; x++ {
+		for y := 0; y < h; y++ {
+			total := 0
+
+			// TODO: This needs to be refactored
+			if x > 0 && y > 0 && b.cells[x-1][y-1].bee == true {
+				total++
+			}
+			if x > 0 && b.cells[x-1][y].bee == true {
+				total++
+			}
+			if x > 0 && y < h-1 && b.cells[x-1][y+1].bee == true {
+				total++
+			}
+
+			if y > 0 && b.cells[x][y-1].bee == true {
+				total++
+			}
+			if y < h-1 && b.cells[x][y+1].bee == true {
+				total++
+			}
+
+			if x < w-1 && y > 0 && b.cells[x+1][y-1].bee == true {
+				total++
+			}
+			if x < w-1 && b.cells[x+1][y].bee == true {
+				total++
+			}
+			if x < w-1 && y < h-1 && b.cells[x+1][y+1].bee == true {
+				total++
+			}
+			cell := b.cells[x][y]
+			cell.count = total
+			b.cells[x][y] = cell
+		}
+	}
+}
+
+func (b *board) UncoverCell(x, y int) {
+	cell := b.cells[x][y]
+	if cell.IsDiscovered() == true {
+		return
+	}
+
+	if cell.HasBee() == true {
+		return
+	}
+
+	cell.discovered = true
+	b.cells[x][y] = cell
+
+	w := b.GetCellCountW()
+	h := b.GetCellCountH()
+
+	// if x > 0 && y > 0 && b.cells[x-1][y-1].count == 0 {
+	// 	b.UncoverCell(x-1, y-1)
+	// }
+	if x > 0 && y > 0 {
+		if b.cells[x-1][y-1].count == 0 {
+			b.UncoverCell(x-1, y-1)
+		} else {
+			b.showCountInCell(x-1, y-1)
+		}
+	}
+
+	if x > 0 {
+		// b.UncoverCell(x-1, y)
+		if b.cells[x-1][y].count == 0 {
+			b.UncoverCell(x-1, y)
+		} else {
+			b.showCountInCell(x-1, y)
+		}
+	}
+	if x > 0 && y < h-1 {
+		// b.UncoverCell(x-1, y+1)
+		if b.cells[x-1][y+1].count == 0 {
+			b.UncoverCell(x-1, y+1)
+		} else {
+			b.showCountInCell(x-1, y+1)
+		}
+	}
+	if y > 0 {
+		// b.UncoverCell(x, y-1)
+		if b.cells[x][y-1].count == 0 {
+			b.UncoverCell(x, y-1)
+		} else {
+			b.showCountInCell(x, y-1)
+		}
+	}
+	if y < h-1 {
+		// b.UncoverCell(x, y+1)
+		if b.cells[x][y+1].count == 0 {
+			b.UncoverCell(x, y+1)
+		} else {
+			b.showCountInCell(x, y+1)
+		}
+	}
+	if x < w-1 && y > 0 {
+		// b.UncoverCell(x+1, y-1)if b.cells[x-1][y].count == 0 {
+		if b.cells[x+1][y-1].count == 0 {
+			b.UncoverCell(x+1, y-1)
+		} else {
+			b.showCountInCell(x+1, y-1)
+		}
+	}
+	if x < w-1 {
+		// b.UncoverCell(x+1, y)
+		if b.cells[x+1][y].count == 0 {
+			b.UncoverCell(x+1, y)
+		} else {
+			b.showCountInCell(x+1, y)
+		}
+	}
+	if x < w-1 && y < h-1 {
+		// b.UncoverCell(x+1, y+1)
+		if b.cells[x+1][y+1].count == 0 {
+			b.UncoverCell(x+1, y+1)
+		} else {
+			b.showCountInCell(x+1, y+1)
+		}
+	}
+}
+
+func (b *board) showCountInCell(x, y int) {
+	cell := b.cells[x][y]
+	cell.showCount = true
+	b.cells[x][y] = cell
+}
+
+func (b *board) unselect(x, y int) Cell {
+	cell := b.cells[x][y]
+	cell.selected = false
+
+	b.cells[x][y] = cell
+
+	return &cell
 }
 
 func random(min int, max int) int {

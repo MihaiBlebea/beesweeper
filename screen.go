@@ -2,30 +2,29 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/MihaiBlebea/beesweeper/game"
 	"github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/ttf"
 )
 
-// Cell height and width
+// Font and font size
 const (
-	CellH = 20
-	CellW = 20
+	fontPath = "./assets/test.ttf"
+	fontSize = 14
 )
 
 // Screen is a struct responsible for displaying the game
 type Screen struct {
-	cellH int
-	cellW int
-	// cellCountH int
-	// cellCountW int
+	cellH  int
+	cellW  int
 	spacer int
 	game   *game.Game
 }
 
 // NewScreen constructor for screen struct
 func NewScreen(cellH, cellW, spacer int, gm *game.Game) *Screen {
-	// b := gm.GetBoard()
 	gm.GetBoard().SetSelected(0, 0)
 
 	return &Screen{cellH, cellW, spacer, gm}
@@ -58,6 +57,12 @@ func (s *Screen) render() error {
 	}
 	defer r.Destroy()
 
+	// init the ttf font
+	if err = ttf.Init(); err != nil {
+		return err
+	}
+	defer ttf.Quit()
+
 	// Render everything in here
 	err = s.drawScene(r)
 	if err != nil {
@@ -77,26 +82,35 @@ func (s *Screen) render() error {
 				running = false
 				break
 			case *sdl.KeyboardEvent:
-				switch eventT.Keysym.Sym {
+
+				keyCode := eventT.Keysym.Sym
+
+				switch keyCode {
 				case sdl.K_UP:
-					fmt.Println("Pressed key up")
-					if selectedY > 0 {
+					if eventT.State == sdl.PRESSED && selectedY > 0 {
+						fmt.Println("Pressed key up")
 						selectedY--
 					}
 				case sdl.K_DOWN:
-					fmt.Println("Pressed key down")
-					if selectedY < s.game.GetBoard().GetCellCountH()-1 {
+					if eventT.State == sdl.PRESSED && selectedY < s.game.GetBoard().GetCellCountH()-1 {
+						fmt.Println("Pressed key down")
 						selectedY++
 					}
 				case sdl.K_LEFT:
-					fmt.Println("Pressed key left")
-					if selectedX > 0 {
+					if eventT.State == sdl.PRESSED && selectedX > 0 {
+						fmt.Println("Pressed key left")
 						selectedX--
 					}
 				case sdl.K_RIGHT:
-					fmt.Println("Pressed key right")
-					if selectedX < s.game.GetBoard().GetCellCountW()-1 {
+					if eventT.State == sdl.PRESSED && selectedX < s.game.GetBoard().GetCellCountW()-1 {
+						fmt.Println("Pressed key right")
 						selectedX++
+					}
+				case sdl.K_RETURN:
+					if eventT.State == sdl.PRESSED {
+						fmt.Println("Pressed key enter")
+						// selectedX++
+						s.game.GetBoard().UncoverCell(selectedX, selectedY)
 					}
 				}
 
@@ -155,6 +169,9 @@ func (s *Screen) getCellColor(isSelected bool) (r, g, b, a uint8) {
 }
 
 func (s *Screen) drawScene(r *sdl.Renderer) error {
+	// Clear the screen to this color: black
+	r.SetDrawColor(0, 0, 0, 255)
+
 	err := r.Clear()
 	if err != nil {
 		return err
@@ -169,16 +186,51 @@ func (s *Screen) drawScene(r *sdl.Renderer) error {
 			cell := board.GetCell(i, j)
 
 			rect := sdl.Rect{
-				X: int32(i * (CellW + s.spacer)),
-				Y: int32(j * (CellH + s.spacer)),
+				X: int32(i * (s.cellW + s.spacer)),
+				Y: int32(j * (s.cellH + s.spacer)),
 				W: int32(s.cellW),
 				H: int32(s.cellH),
 			}
-			s.cell(rect, r, cell.HasBee(), cell.IsSelected())
+			s.cell(rect, r, cell.IsDiscovered(), cell.IsSelected())
+
+			if cell.ShouldShowCount() == true {
+				s.drawText(r, &rect, strconv.Itoa(cell.GetCount()))
+			}
 		}
 	}
 
 	r.Present()
+
+	return nil
+}
+
+func (s *Screen) drawText(r *sdl.Renderer, rect *sdl.Rect, txt string) error {
+	font, err := ttf.OpenFont(fontPath, fontSize)
+	if err != nil {
+		return err
+	}
+	defer font.Close()
+
+	// Create a red text with the font
+	surf, err := font.RenderUTF8Solid(
+		txt,
+		sdl.Color{R: 255, G: 255, B: 255, A: 255},
+	)
+	if err != nil {
+		return err
+	}
+	defer surf.Free()
+
+	t, err := r.CreateTextureFromSurface(surf)
+	if err != nil {
+		return err
+	}
+	defer t.Destroy()
+
+	err = r.Copy(t, nil, rect)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

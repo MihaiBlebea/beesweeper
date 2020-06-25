@@ -4,6 +4,9 @@ package game
 type Cell interface {
 	HasBee() bool
 	IsSelected() bool
+	GetCount() int
+	IsDiscovered() bool
+	ShouldShowCount() bool
 }
 
 type cell struct {
@@ -13,6 +16,7 @@ type cell struct {
 	discovered bool
 	count      int
 	selected   bool
+	showCount  bool
 }
 
 func newCell(bee bool, x, y int) *cell {
@@ -27,6 +31,20 @@ func (c *cell) HasBee() bool {
 // IsSelected returns true if the cell is selected by the user
 func (c *cell) IsSelected() bool {
 	return c.selected
+}
+
+// IsDiscovered returns true if the cell is discovered by the user
+func (c *cell) IsDiscovered() bool {
+	return c.discovered
+}
+
+// GetCount returns the count for the cell
+func (c *cell) GetCount() int {
+	return c.count
+}
+
+func (c *cell) ShouldShowCount() bool {
+	return c.showCount
 }
 
 func (c *cell) assignBee(hasBee bool) {
