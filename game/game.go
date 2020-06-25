@@ -14,12 +14,12 @@ type Game struct {
 }
 
 // NewGame creates a new game struct
-func NewGame(cellCountH, cellCountW int) *Game {
+func NewGame(cellCountH, cellCountW, bees int) *Game {
 	return &Game{
 		id:      generateID(),
 		playing: true,
 		turn:    1,
-		board:   *newBoard(cellCountH, cellCountW),
+		board:   *newBoard(cellCountH, cellCountW, bees),
 	}
 }
 

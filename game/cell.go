@@ -7,6 +7,7 @@ type Cell interface {
 	GetCount() int
 	IsDiscovered() bool
 	ShouldShowCount() bool
+	IsFlagged() bool
 }
 
 type cell struct {
@@ -17,6 +18,7 @@ type cell struct {
 	count      int
 	selected   bool
 	showCount  bool
+	flagged    bool
 }
 
 func newCell(bee bool, x, y int) *cell {
@@ -36,6 +38,11 @@ func (c *cell) IsSelected() bool {
 // IsDiscovered returns true if the cell is discovered by the user
 func (c *cell) IsDiscovered() bool {
 	return c.discovered
+}
+
+// IsFlagged returns true if the cell is flagged
+func (c *cell) IsFlagged() bool {
+	return c.flagged
 }
 
 // GetCount returns the count for the cell

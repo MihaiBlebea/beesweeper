@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/MihaiBlebea/beesweeper/game"
 	"github.com/veandco/go-sdl2/sdl"
@@ -74,6 +75,8 @@ func (s *Screen) render() error {
 	selectedY := 0
 
 	running := true
+	won := false
+
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch eventT := event.(type) {
@@ -110,8 +113,21 @@ func (s *Screen) render() error {
 					if eventT.State == sdl.PRESSED {
 						fmt.Println("Pressed key enter")
 						// selectedX++
-						s.game.GetBoard().UncoverCell(selectedX, selectedY)
+						if s.game.GetBoard().UncoverCell(selectedX, selectedY) == true {
+							running = false
+						}
 					}
+				case sdl.K_SPACE:
+					if eventT.State == sdl.PRESSED {
+						fmt.Println("Pressed key space")
+						// selectedX++
+						s.game.GetBoard().ToggleFlag(selectedX, selectedY)
+					}
+				}
+
+				if s.game.GetBoard().Won() == true {
+					won = true
+					running = false
 				}
 
 				s.game.GetBoard().UnselectAll()
@@ -125,6 +141,17 @@ func (s *Screen) render() error {
 
 		sdl.Delay(16)
 	}
+
+	r.Clear()
+	txt := "Game Over"
+	if won {
+		txt = "You Won"
+	}
+	s.drawText(r, nil, txt)
+	r.Present()
+
+	// sdl.Delay(60 * 60 * 5)
+	time.Sleep(time.Second * 10)
 
 	return nil
 }
@@ -149,12 +176,17 @@ func (s *Screen) renderer(window *sdl.Window) (*sdl.Renderer, error) {
 	return sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
 }
 
-func (s *Screen) cell(rect sdl.Rect, r *sdl.Renderer, isOpen, isSelected bool) {
+func (s *Screen) cell(rect sdl.Rect, r *sdl.Renderer, isOpen, isSelected, isFlagged bool) {
 	// Set color
 	r.SetDrawColor(s.getCellColor(isSelected))
 	r.DrawRect(&rect)
 	if isOpen == false {
-		r.FillRect(&rect)
+		if isFlagged == true {
+			r.SetDrawColor(238, 238, 0, 1)
+			r.FillRect(&rect)
+		} else {
+			r.FillRect(&rect)
+		}
 	}
 }
 
@@ -191,7 +223,7 @@ func (s *Screen) drawScene(r *sdl.Renderer) error {
 				W: int32(s.cellW),
 				H: int32(s.cellH),
 			}
-			s.cell(rect, r, cell.IsDiscovered(), cell.IsSelected())
+			s.cell(rect, r, cell.IsDiscovered(), cell.IsSelected(), cell.IsFlagged())
 
 			if cell.ShouldShowCount() == true {
 				s.drawText(r, &rect, strconv.Itoa(cell.GetCount()))
